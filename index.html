@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Добавить domain / ip</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input { margin: 5px 0; padding: 5px; width: 250px; }
+    button { padding: 6px 12px; }
+    pre { background: #f4f4f4; padding: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>Добавить запись</h2>
+
+<input id="domain" placeholder="domain (example.com)">
+<br>
+<input id="ip" placeholder="ip (1.1.1.1)">
+<br><br>
+<button onclick="addEntry()">Добавить</button>
+
+<pre id="status"></pre>
+
+<script>
+const TOKEN = "GITHUB_TOKEN";      // 🔴 вставь токен
+const OWNER = "USERNAME";          // 🔴 твой GitHub username
+const REPO = "my-repo";            // 🔴 имя репозитория
+const FILE_PATH = "data.txt";      // файл в репо
+
+async function addEntry() {
+  const domain = document.getElementById("domain").value.trim();
+  const ip = document.getElementById("ip").value.trim();
+  const status = document.getElementById("status");
+
+  if (!domain || !ip) {
+    status.textContent = "Заполни domain и ip";
+    return;
+  }
+
+  const api = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`;
+
+  try {
+    // 1. получить файл
+    const res = await fetch(api, {
+      headers: {
+        Authorization: `token ${TOKEN}`
+      }
+    });
+    const data = await res.json();
+
+    const content = atob(data.content.replace(/\n/g, ""));
+    const newLine = `${domain} ${ip}`;
+    const newContent = content + "\n" + newLine;
+
+    // 2. обновить файл
+    const update = await fetch(api, {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: "add domain",
+        content: btoa(newContent),
+        sha: data.sha
+      })
+    });
+
+    if (update.ok) {
+      status.textContent = "✅ Запись добавлена:\n" + newLine;
+      document.getElementById("domain").value = "";
+      document.getElementById("ip").value = "";
+    } else {
+      status.textContent = "❌ Ошибка обновления файла";
+    }
+
+  } catch (e) {
+    status.textContent = "❌ Ошибка: " + e;
+  }
+}
+</script>
+
+</body>
+</html>
