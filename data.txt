@@ -1,1 +1,2 @@
-google 172.253.134.147
+google www.google.com 172.253.134.147
+ssdunix ssdunix.xyz
